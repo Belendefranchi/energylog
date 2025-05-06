@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>EnergyLOG plus</title>
+  <!-- <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"> -->
+<!--   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script> -->
+  <script src="js/jspdf.umd.min.js"></script>
+  <link href="css/bootstrap.min.css" rel="stylesheet">
+  <link href="css/styles.css" rel="stylesheet">
+</head>
+<body>
+  <div class="custom-panel row row-cols-1 row-cols-md-3 g-4 text-sm">
+		
+    <div class="col">
+			<div class="d-flex flex-column align-items-center justify-content-center border rounded-2 p-4 mb-2">
+				<div style="grid-template-columns: 1fr 1fr;" class="mb-4 pe-4 d-grid gap-0 row-gap-1">
+					<span>Estado: </span>
+					<span id="estado" class="text-center py-1 bg-black"></span>
+					<span>Fecha: </span>
+					<span id="datetime" class="text-center py-1 bg-black text-success"></span>
+				</div>
+			</div>
+      <div class="d-flex flex-column align-items-center justify-content-center border rounded-2 p-4 mt-2">
+        <h2 class="fw-bold mb-1">Alarmas</h2>
+        <ul class="mt-2 ps-3">
+          <li>Lectura inválida</li>
+          <li>Transformador invertido</li>
+          <li>Error de frecuencia</li>
+          <li>Memoria del datalogger llena</li>
+          <li>Datalogger dañado</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="col text-center">
+      <h1 class="bg-black text-success fw-bold fs-4 mb-4">Insensibilizador</h1>
+      <div>
+        <p>Tensión (V)</p>
+        <p id="vac" class="bg-black text-red-500 px-2 lcd">223</p>
+        <p>Corriente (mA)</p>
+        <p id="amp" class="bg-black text-red-500 px-2 lcd">2.00</p>
+        <p>Frecuencia (Hz)</p>
+        <p id="fre" class="bg-black text-red-500 px-2 lcd">0.99</p>
+
+      </div>
+    </div>
+
+    <div class="">
+			<div class="w-100" style="max-width: 400px;">
+				<div class="text-center border p-5 mb-2 rounded-2">
+					<div class="mt-1 px-4">
+						<h1 class="fs-3 fw-bold">EnergyLOG <span class="fst-italic fs-5">plus</span></h1>
+						<h2 class="text-green-700 fs-4 fw-bold">Sitrad</h2>
+					</div>
+					<div class="mt-1 px-4">
+						<span class="bg-success text-white text-xs px-2 py-1 rounded-pill">Full Gauge</span>
+					</div>
+				</div>
+
+				<div class="d-flex justify-content-center align-items-center p-5 my-2 border rounded-2">
+					<div class="mt-1 d-flex flex-column justify-content-center w-75">
+						<input type="date" id="fechaReporte" class="form-control p-2 mb-2"  />
+						<button id="btnReporte" class="btn btn-secondary p-2 mt-2 shadow rounded-1">Generar reporte</button>
+					</div>
+				</div>
+
+				<div class="d-flex justify-content-center align-items-center p-5 mt-2 border rounded-2">
+					<div class="mt-1 d-flex flex-column justify-content-center w-75">
+						<a href="config.html" class="btn btn-secondary p-2 shadow rounded-1">Parámetros</a>
+					</div>
+				</div>
+			</div>
+		</div>
+  </div>
+
+  <script>
+    const { jsPDF } = window.jspdf;
+
+		function getConfig() {
+			const defaults = {
+				voltajeMin: 90,
+				voltajeMax: 110,
+				corrienteMin: 140,
+				corrienteMax: 190,
+				frecuenciaMin: 200,
+				frecuenciaMax: 300,
+				horaInicio: "06:00",
+				horaFin: "18:00"
+			};
+
+			const data = JSON.parse(localStorage.getItem("energyConfig")) || {};
+			
+			// Asegurar que cada campo exista y tenga el tipo correcto
+			return {
+				voltajeMin: Number(data.voltajeMin) || defaults.voltajeMin,
+				voltajeMax: Number(data.voltajeMax) || defaults.voltajeMax,
+				corrienteMin: Number(data.corrienteMin) || defaults.corrienteMin,
+				corrienteMax: Number(data.corrienteMax) || defaults.corrienteMax,
+				frecuenciaMin: Number(data.frecuenciaMin) || defaults.frecuenciaMin,
+				frecuenciaMax: Number(data.frecuenciaMax) || defaults.frecuenciaMax,
+				horaInicio: typeof data.horaInicio === "string" ? data.horaInicio : defaults.horaInicio,
+				horaFin: typeof data.horaFin === "string" ? data.horaFin : defaults.horaFin
+			};
+		}
+
+
+    function updateDisplay() {
+      const config = getConfig();
+
+      const voltaje = (Math.random() * (config.voltajeMax - config.voltajeMin) + config.voltajeMin).toFixed(0);
+      const corriente = (Math.random() * (config.corrienteMax - config.corrienteMin) + config.corrienteMin).toFixed(0);
+      const frecuencia = (Math.random() * (config.frecuenciaMax - config.frecuenciaMin) + config.frecuenciaMin).toFixed(0);
+
+      document.getElementById('vac').textContent = voltaje;
+      document.getElementById('amp').textContent = corriente;
+      document.getElementById('fre').textContent = frecuencia;
+
+      const now = new Date();
+      const dateStr = now.toLocaleDateString('es-ES');
+      const timeStr = now.toLocaleTimeString('es-ES');
+      document.getElementById('datetime').textContent = `${dateStr} ${timeStr}`;
+    }
+
+    let enLinea = true;
+
+    window.onload = function () {
+      const guardado = localStorage.getItem('estadoOnline');
+      enLinea = guardado === null ? true : (guardado === 'true');
+      const estadoSpan = document.getElementById('estado');
+
+      if (!enLinea) {
+        estadoSpan.textContent = "Offline";
+        estadoSpan.classList.remove('text-success');
+        estadoSpan.classList.add('text-danger');
+        ponerValoresEnCero();
+      } else {
+        estadoSpan.textContent = "Online";
+        estadoSpan.classList.remove('text-danger');
+        estadoSpan.classList.add('text-success');
+        updateDisplay();
+      }
+
+      const fechaSelector = document.getElementById('fechaReporte');
+      const today = new Date().toISOString().split('T')[0];
+      fechaSelector.value = today;
+
+      if (enLinea) {
+        setInterval(updateDisplay, 5000);
+      }
+    };
+
+    function ponerValoresEnCero() {
+      document.getElementById('vac').textContent = "0";
+      document.getElementById('amp').textContent = "0";
+      document.getElementById('fre').textContent = "0";
+    }
+
+		function generarDatosPorRango(fechaSeleccionada) {
+			const { voltajeMin, voltajeMax, corrienteMin, corrienteMax, frecuenciaMin, frecuenciaMax, horaInicio, horaFin } = getConfig();
+
+			// Parseamos fecha y hora por separado
+			const [anio, mes, dia] = fechaSeleccionada.split("-");
+			const [hInicio, mInicio] = horaInicio.split(":");
+			const [hFin, mFin] = horaFin.split(":");
+
+			const inicio = new Date(anio, mes - 1, dia, hInicio, mInicio);
+			const fin = new Date(anio, mes - 1, dia, hFin, mFin);
+
+			const datos = [];
+			let actual = new Date(inicio);
+
+			while (actual <= fin) {
+				const tiempo = actual.toTimeString().slice(0, 5); // hh:mm
+
+				const voltaje = getRandom(voltajeMin, voltajeMax);
+				const corriente = getRandom(corrienteMin, corrienteMax);
+				const frecuencia = getRandom(frecuenciaMin, frecuenciaMax);
+
+				datos.push({ tiempo, voltaje, corriente, frecuencia });
+
+				actual.setMinutes(actual.getMinutes() + 10);
+			}
+
+			return datos;
+		}
+
+
+    function getRandom(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function generarPDF(datos, fecha) {
+      const doc = new jsPDF();
+      doc.setFontSize(14);
+      doc.text(`Reporte de valores simulados - ${fecha}`, 10, 10);
+
+      let y = 20;
+      doc.setFontSize(10);
+      doc.text("Hora     Voltaje (V)    Corriente (mA)    Frecuencia (Hz)", 10, y);
+      y += 6;
+
+      datos.forEach(dato => {
+        const linea = `${dato.tiempo}        ${dato.voltaje}                 ${dato.corriente}                   ${dato.frecuencia}`;
+        doc.text(linea, 10, y);
+        y += 6;
+        if (y > 280) {
+          doc.addPage();
+          y = 10;
+        }
+      });
+
+      doc.save(`reporte_${fecha}.pdf`);
+    }
+
+    document.getElementById('btnReporte').addEventListener('click', () => {
+      const fecha = document.getElementById('fechaReporte').value;
+      const datos = generarDatosPorRango(fecha);
+      generarPDF(datos, fecha);
+    });
+  </script>
+</body>
+</html>

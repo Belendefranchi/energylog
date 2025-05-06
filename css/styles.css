@@ -1,0 +1,43 @@
+body {
+  background-color: #e5e7eb;
+  font-family: sans-serif;
+  padding: 1rem;
+}
+.text-success {
+  color: #0f0 !important;
+}
+
+.bg-black {
+  background-color: #000 !important;
+}
+.custom-panel {
+  max-width: 1200px;
+  margin: 0 auto;
+  border: 2px solid #6b7280;
+  /* padding: 1rem; */
+  background-color: white;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+.text-red-500 {
+  color: #ef4444;
+}
+.text-green-700 {
+  color: #15803d;
+}
+.bg-black {
+  background-color: black;
+}
+.cursor-pointer {
+  cursor: pointer;
+}
+@font-face {
+  font-family: 'Digital7';
+  src: url('../fonts/digital-7.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+.lcd {
+  font-family: 'Digital7', monospace;
+  font-size: 5rem;
+}
+
