@@ -4,9 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>EnergyLOG plus</title>
-  <script src="js/jspdf.umd.min.js"></script>
   <link href="css/bootstrap.min.css" rel="stylesheet">
   <link href="css/styles.css" rel="stylesheet">
+	<script src="js/jspdf.umd.min.js"></script>
+	<script src="js/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
   <div class="custom-panel row row-cols-1 row-cols-md-3 g-4 text-sm">
@@ -79,7 +80,6 @@
 			</div>
 		</div>
   </div>
-
   <script>
     const { jsPDF } = window.jspdf;
 
@@ -97,7 +97,6 @@
 
 			const data = JSON.parse(localStorage.getItem("energyConfig")) || {};
 			
-			// Asegurar que cada campo exista y tenga el tipo correcto
 			return {
 				voltajeMin: Number(data.voltajeMin) || defaults.voltajeMin,
 				voltajeMax: Number(data.voltajeMax) || defaults.voltajeMax,
@@ -187,6 +186,7 @@
 
 				actual.setMinutes(actual.getMinutes() + 10);
 			}
+			console.log(datos);
 
 			return datos;
 		}
@@ -195,34 +195,86 @@
       return Math.floor(Math.random() * (max - min + 1)) + min;
     }
 
-    function generarPDF(datos, fecha) {
-      const doc = new jsPDF();
-      doc.setFontSize(14);
-      doc.text(`Reporte de valores simulados - ${fecha}`, 10, 10);
+		function generarPDF(datos, fecha) {
+			const { jsPDF } = window.jspdf;
+			const doc = new jsPDF();
 
-      let y = 20;
-      doc.setFontSize(10);
-      doc.text("Hora     Voltaje (V)    Corriente (mA)    Frecuencia (Hz)", 10, y);
-      y += 6;
+			doc.setFont("helvetica", "bold");
+			doc.setFontSize(18);
+			doc.text("Reporte de Energía", 105, 20, { align: "center" });
 
-      datos.forEach(dato => {
-        const linea = `${dato.tiempo}        ${dato.voltaje}                 ${dato.corriente}                   ${dato.frecuencia}`;
-        doc.text(linea, 10, y);
-        y += 6;
-        if (y > 280) {
-          doc.addPage();
-          y = 10;
-        }
-      });
+			doc.setFontSize(12);
+			doc.setFont("helvetica", "normal");
+			doc.text(`Fecha: ${fecha}`, 14, 30);
 
-      doc.save(`reporte_${fecha}.pdf`);
-    }
+			const datosConUnidades = datos.map(dato => [
+				dato[0] + ' Hs',
+				dato[1] + ' V',
+				dato[2] + ' Hz',
+				dato[3] + ' mA',
+			]);
 
-    document.getElementById('btnReporte').addEventListener('click', () => {
-      const fecha = document.getElementById('fechaReporte').value;
-      const datos = generarDatosPorRango(fecha);
-      generarPDF(datos, fecha);
-    });
+			console.log(datosConUnidades); // Verifica si los datos son correctos antes de pasarlos a autoTable
+
+			doc.autoTable({
+					startY: 40,
+					head: [['Hora', 'Voltaje (V)', 'Frecuencia (Hz)', 'Corriente (mA)']],
+					body: datosConUnidades,
+					headStyles: {
+							fillColor: [34, 38, 93],
+							textColor: [255, 255, 255],
+							halign: 'center',
+							fontStyle: 'bold'
+					},
+					bodyStyles: {
+							textColor: [0, 0, 0],
+							fontSize: 10,
+							halign: 'center'
+					},
+					alternateRowStyles: { fillColor: [240, 240, 240] },
+					margin: { top: 40, left: 14, right: 14 },
+					theme: 'grid'
+			});
+
+
+
+/* 			doc.autoTable({
+				startY: 40,
+				head: [['Hora', 'Voltaje', 'Corriente', 'Frecuencia']],
+				body: datos.map(dato => [
+            dato.tiempo, 
+            dato.voltaje,   // Agregar "V" a cada voltaje
+            dato.corriente,  // Agregar "A" a cada corriente
+            dato.frecuencia, // Agregar "Hz" a cada frecuencia
+        ]),
+				headStyles: {
+					fillColor: [34, 38, 93],
+					textColor: [255, 255, 255],
+					halign: 'center',
+					fontStyle: 'bold'
+				},
+				bodyStyles: {
+					textColor: [0, 0, 0],
+					fontSize: 10,
+					halign: 'center'
+				},
+				alternateRowStyles: { fillColor: [240, 240, 240] },
+				margin: { top: 40, left: 14, right: 14 },
+				theme: 'grid'
+			}); */
+
+			doc.save(`reporte_insensibilizado_${fecha}.pdf`);
+		}
+
+		document.getElementById('btnReporte').addEventListener('click', () => {
+			const fecha = document.getElementById('fechaReporte').value;
+			const datos = generarDatosPorRango(fecha).map(dato => [
+				dato.tiempo, dato.voltaje, dato.frecuencia, dato.corriente
+			]);
+			generarPDF(datos, fecha);
+		});
+
+
   </script>
 </body>
 </html>
