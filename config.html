@@ -57,12 +57,14 @@
           </div>
 
           <div class="mb-3">
-            <p class="mb-1">
-              Estado: <span id="estado" class="fw-bold text-success">Online</span>
-            </p>
-            <div class="d-flex gap-2">
-              <button type="button" onclick="toggleEstado(true)" class="btn btn-outline-success btn-sm">Online</button>
-              <button type="button" onclick="toggleEstado(false)" class="btn btn-outline-danger btn-sm">Offline</button>
+            <div class="d-flex flex-row justify-content-evenly align-items-center gap-2">
+              <p class="mb-1 fw-bold">
+                Estado: <span id="estado" class="fw-bold text-success">Online</span>
+              </p>
+              <div>
+                <button type="button" onclick="toggleEstado(true)" class="btn btn-outline-success btn-sm">Online</button>
+                <button type="button" onclick="toggleEstado(false)" class="btn btn-outline-danger btn-sm">Offline</button>
+              </div>
             </div>
           </div>
 
