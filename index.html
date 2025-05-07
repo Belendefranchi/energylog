@@ -186,8 +186,6 @@
 
 				actual.setMinutes(actual.getMinutes() + 10);
 			}
-			console.log(datos);
-
 			return datos;
 		}
 
@@ -195,17 +193,43 @@
       return Math.floor(Math.random() * (max - min + 1)) + min;
     }
 
-		function generarPDF(datos, fecha) {
+		function generarPDF(datos, fecha, horaInicio, horaFin) {
 			const { jsPDF } = window.jspdf;
-			const doc = new jsPDF();
+			const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+
+			const pageWidth = doc.internal.pageSize.getWidth();
+			const margin = 14;
+			const availableWidth = pageWidth - margin * 2;
+			const columnCount = 4;
+			const columnWidth = availableWidth / columnCount;
+			
+			function agregarTextoCentrado(doc, texto, y) {
+				const textWidth = doc.getTextWidth(texto);
+				const x = (pageWidth - textWidth) / 2;
+				doc.text(texto, x, y);
+			}
+			
+			function agregarLineaHorizontal(doc, y = 30, margen = 14) {
+				const pageWidth = doc.internal.pageSize.getWidth();
+				const x1 = margen;
+				const x2 = pageWidth - margen;
+				
+				/* doc.setDrawColor(222, 226, 230); */ // Color de la línea
+				/* doc.setLineWidth(0.5); */ // Grosor de la línea
+				doc.line(x1, y, x2, y); // Dibuja la línea
+			}
 
 			doc.setFont("helvetica", "bold");
 			doc.setFontSize(18);
-			doc.text("Reporte de Energía", 105, 20, { align: "center" });
+			agregarTextoCentrado(doc, "Reporte de mediciones energéticas", 15);
+			doc.setFontSize(16);
+			agregarTextoCentrado(doc, "Insensibilizador de aves", 25);
 
-			doc.setFontSize(12);
+			agregarLineaHorizontal(doc, 30);
+
 			doc.setFont("helvetica", "normal");
-			doc.text(`Fecha: ${fecha}`, 14, 30);
+			doc.setFontSize(12);
+			doc.text(`Fecha: ${fecha} - Desde ${horaInicio} hasta ${horaFin} hs. - Generado automáticamente con EnergyLog`, 15, 36);
 
 			const datosConUnidades = datos.map(dato => [
 				dato[0] + ' Hs',
@@ -214,17 +238,25 @@
 				dato[3] + ' mA',
 			]);
 
-			console.log(datosConUnidades); // Verifica si los datos son correctos antes de pasarlos a autoTable
-
 			doc.autoTable({
 					startY: 40,
-					head: [['Hora', 'Voltaje (V)', 'Frecuencia (Hz)', 'Corriente (mA)']],
+					head: [['Hora', 'Voltaje', 'Frecuencia', 'Corriente']],
 					body: datosConUnidades,
+					columnStyles: {
+						0: { cellWidth: columnWidth },
+						1: { cellWidth: columnWidth },
+						2: { cellWidth: columnWidth },
+						3: { cellWidth: columnWidth },
+					},
+					styles: {
+						lineWidth: 0.5,          // Grosor del borde
+						lineColor: [222, 226, 230], // Color del borde
+					},
 					headStyles: {
 							fillColor: [34, 38, 93],
 							textColor: [255, 255, 255],
-							halign: 'center',
-							fontStyle: 'bold'
+							fontStyle: 'bold',
+							halign: 'center'
 					},
 					bodyStyles: {
 							textColor: [0, 0, 0],
@@ -232,46 +264,21 @@
 							halign: 'center'
 					},
 					alternateRowStyles: { fillColor: [240, 240, 240] },
-					margin: { top: 40, left: 14, right: 14 },
+					margin: { top: 10, left: 14, right: 14 },
 					theme: 'grid'
 			});
-
-
-
-/* 			doc.autoTable({
-				startY: 40,
-				head: [['Hora', 'Voltaje', 'Corriente', 'Frecuencia']],
-				body: datos.map(dato => [
-            dato.tiempo, 
-            dato.voltaje,   // Agregar "V" a cada voltaje
-            dato.corriente,  // Agregar "A" a cada corriente
-            dato.frecuencia, // Agregar "Hz" a cada frecuencia
-        ]),
-				headStyles: {
-					fillColor: [34, 38, 93],
-					textColor: [255, 255, 255],
-					halign: 'center',
-					fontStyle: 'bold'
-				},
-				bodyStyles: {
-					textColor: [0, 0, 0],
-					fontSize: 10,
-					halign: 'center'
-				},
-				alternateRowStyles: { fillColor: [240, 240, 240] },
-				margin: { top: 40, left: 14, right: 14 },
-				theme: 'grid'
-			}); */
 
 			doc.save(`reporte_insensibilizado_${fecha}.pdf`);
 		}
 
 		document.getElementById('btnReporte').addEventListener('click', () => {
 			const fecha = document.getElementById('fechaReporte').value;
+			const horaInicio = getConfig().horaInicio;
+			const horaFin = getConfig().horaFin;
 			const datos = generarDatosPorRango(fecha).map(dato => [
 				dato.tiempo, dato.voltaje, dato.frecuencia, dato.corriente
 			]);
-			generarPDF(datos, fecha);
+			generarPDF(datos, fecha, horaInicio, horaFin);
 		});
 
 
