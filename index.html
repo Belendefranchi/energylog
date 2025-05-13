@@ -99,15 +99,16 @@
 			const data = JSON.parse(localStorage.getItem("energyConfig")) || {};
 			
 			return {
-				voltajeMin: Number(data.voltajeMin) || defaults.voltajeMin,
-				voltajeMax: Number(data.voltajeMax) || defaults.voltajeMax,
-				corrienteMin: Number(data.corrienteMin) || defaults.corrienteMin,
-				corrienteMax: Number(data.corrienteMax) || defaults.corrienteMax,
-				frecuenciaMin: Number(data.frecuenciaMin) || defaults.frecuenciaMin,
-				frecuenciaMax: Number(data.frecuenciaMax) || defaults.frecuenciaMax,
+				voltajeMin: data.voltajeMin !== undefined ? Number(data.voltajeMin) : defaults.voltajeMin,
+				voltajeMax: data.voltajeMax !== undefined ? Number(data.voltajeMax) : defaults.voltajeMax,
+				corrienteMin: data.corrienteMin !== undefined ? Number(data.corrienteMin) : defaults.corrienteMin,
+				corrienteMax: data.corrienteMax !== undefined ? Number(data.corrienteMax) : defaults.corrienteMax,
+				frecuenciaMin: data.frecuenciaMin !== undefined ? Number(data.frecuenciaMin) : defaults.frecuenciaMin,
+				frecuenciaMax: data.frecuenciaMax !== undefined ? Number(data.frecuenciaMax) : defaults.frecuenciaMax,
 				horaInicio: typeof data.horaInicio === "string" ? data.horaInicio : defaults.horaInicio,
 				horaFin: typeof data.horaFin === "string" ? data.horaFin : defaults.horaFin
 			};
+
 		}
 
 
